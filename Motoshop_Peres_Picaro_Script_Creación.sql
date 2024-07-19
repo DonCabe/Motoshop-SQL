@@ -1,120 +1,130 @@
-create schema motoshop;
-use motoshop;
+CREATE SCHEMA IF NOT EXISTS motoshop;
+USE motoshop;
 
-create table cliente (
-id_cliente int not null auto_increment primary key,
-nombre varchar(30) not null,
-apellido varchar(30) not null,
-telefono varchar(15),
-email varchar (45),
-direccion varchar(100)
+CREATE TABLE IF NOT EXISTS partido (
+id_partido INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+nombre VARCHAR(30) NOT NULL
 );
 
-create table empleado (
-id_empleado int not null auto_increment primary key,
-nombre varchar(30) not null,
-apellido varchar(30) not null,
-cargo varchar (20) not null,
-fecha_alta date not null,
-telefono varchar(15),
-email varchar (45)
+CREATE TABLE IF NOT EXISTS provincia (
+id_provincia INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+nombre VARCHAR(30) NOT NULL
 );
 
-create table proveedor (
-id_proveedor int not null auto_increment primary key,
-denominacion varchar(30) not null,
-telefono varchar(15),
-email varchar (45),
-direccion varchar(100)
+CREATE TABLE IF NOT EXISTS cliente (
+id_cliente INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+nombre VARCHAR(30) NOT NULL,
+apellido VARCHAR(30) NOT NULL,
+telefono VARCHAR(15),
+email VARCHAR (45),
+direccion VARCHAR(50),
+id_partido INT,
+id_provincia INT,
+	FOREIGN KEY (id_partido) REFERENCES partido(id_partido),
+	FOREIGN KEY (id_provincia) REFERENCES provincia(id_provincia)
 );
 
-create table motocicleta (
-id_moto int not null auto_increment primary key,
-marca varchar(20) not null,
-modelo varchar(30) not null,
-anio year not null,
-cilindrada smallint not null,
-precio_unit float not null,
-stock int not null,
-fecha_stock date not null
+CREATE TABLE IF NOT EXISTS empleado (
+id_empleado INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+nombre VARCHAR(30) NOT NULL,
+apellido VARCHAR(30) NOT NULL,
+cargo VARCHAR (20) NOT NULL,
+fecha_alta DATETIME NOT NULL,
+telefono VARCHAR(15),
+email VARCHAR (45)
 );
 
-create table moto_cliente (
-patente varchar(8) not null,
-id_cliente int not null,
-fecha_alta datetime not null,
-id_moto int,
-marca varchar(20),
-modelo varchar(30),
-	primary key (patente, id_cliente),
-	foreign key (id_cliente) references cliente(id_cliente),
-	foreign key (id_moto) references motocicleta(id_moto)
+CREATE TABLE IF NOT EXISTS log_empleado (
+id_log INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+id_empleado INT NOT NULL,
+cargo_log VARCHAR (20) NOT NULL,
+fecha_log DATETIME NOT NULL,
+telefono_log VARCHAR(15),
+email_log VARCHAR (45),
+detalle_log VARCHAR (50),
+	FOREIGN KEY (id_empleado) REFERENCES empleado(id_empleado)
 );
 
-create table articulo (
-id_articulo int not null auto_increment primary key,
-marca varchar(30) default 'generico' not null,
-detalle varchar(100) not null,
-precio_unit float not null,
-stock int not null,
-fecha_stock date not null
+CREATE TABLE IF NOT EXISTS proveedor (
+id_proveedor INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+denominacion VARCHAR(30) NOT NULL,
+telefono VARCHAR(15),
+email VARCHAR (45),
+direccion VARCHAR(100)
 );
 
-create table venta (
-id_venta int not null auto_increment primary key,
-id_cliente int not null,
-id_empleado int not null,
-fecha_venta datetime default now() not null,
-	foreign key (id_cliente) references cliente(id_cliente),
-	foreign key (id_empleado) references empleado(id_empleado)
+CREATE TABLE IF NOT EXISTS motocicleta (
+id_moto INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+marca VARCHAR(20) NOT NULL,
+modelo VARCHAR(30) NOT NULL,
+anio YEAR NOT NULL,
+cilindrada SMALLINT NOT NULL,
+precio FLOAT NOT NULL,
+stock INT NOT NULL,
+fecha_stock DATETIME NOT NULL DEFAULT NOW()
 );
 
-create table venta_producto (
-id_venta int not null,
-id_producto int not null,
-es_moto boolean default FALSE,
-precio_vta_unit float not null,
-cantidad int not null,
-	primary key (id_venta, id_producto),
-	foreign key (id_venta) references venta(id_venta),
-	foreign key (id_producto) references motocicleta(id_moto),
-    foreign key (id_producto) references articulo(id_articulo)
+CREATE TABLE IF NOT EXISTS moto_cliente (
+patente VARCHAR(8) NOT NULL PRIMARY KEY,
+id_titular INT NOT NULL,
+id_moto INT,
+marca VARCHAR(20),
+modelo VARCHAR(30),
+	FOREIGN KEY (id_titular) REFERENCES cliente(id_cliente),
+	FOREIGN KEY (id_moto) REFERENCES motocicleta(id_moto)
 );
 
-create table orden_compra (
-id_compra int not null auto_increment primary key,
-id_proveedor int not null,
-id_emp_pedido int not null,
-fecha_pedido datetime default now() not null,
-fecha_llegada datetime,
-	foreign key (id_proveedor) references proveedor(id_proveedor),
-	foreign key (id_emp_pedido) references empleado(id_empleado)
+CREATE TABLE IF NOT EXISTS log_moto_cliente (
+id_log INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+patente VARCHAR(8) NOT NULL,
+id_titular_actual INT NOT NULL,
+fecha_log DATETIME NOT NULL,
+detalle_log VARCHAR(50),
+	FOREIGN KEY (patente) REFERENCES moto_cliente(patente),
+	FOREIGN KEY (id_titular_actual) REFERENCES cliente(id_cliente)
 );
 
-create table compra_producto (
-id_compra int not null,
-id_producto int not null,
-es_moto boolean default FALSE,
-costo_unit float not null,
-cantidad int not null,
-	primary key (id_compra, id_producto),
-	foreign key (id_compra) references orden_compra(id_compra),
-	foreign key (id_producto) references motocicleta(id_moto),
-    foreign key (id_producto) references articulo(id_articulo)
+CREATE TABLE IF NOT EXISTS venta (
+id_venta INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+id_cliente INT NOT NULL,
+id_empleado INT NOT NULL,
+id_moto INT NOT NULL,
+precio_vta FLOAT NOT NULL,
+fecha_venta DATETIME DEFAULT NOW() NOT NULL,
+	FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+	FOREIGN KEY (id_empleado) REFERENCES empleado(id_empleado)
 );
 
-create table ticket_taller (
-id_ticket int not null auto_increment primary key,
-patente varchar(8) not null,
-id_cliente int not null,
-id_empleado int not null,
-id_venta_repuestos int,
-fecha_inicio datetime default now() not null,
-fecha_fin datetime,
-descripcion varchar(500),
-costo_service int default 0 not null,
-	foreign key (patente) references moto_cliente(patente),
-	foreign key (id_cliente) references cliente(id_cliente),
-	foreign key (id_venta_repuestos) references venta(id_venta),
-	foreign key (id_empleado) references empleado(id_empleado)
+CREATE TABLE IF NOT EXISTS orden_compra (
+id_compra INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+id_proveedor INT NOT NULL,
+id_empl_pedido INT NOT NULL,
+fecha_pedido DATETIME DEFAULT NOW() NOT NULL,
+fecha_llegada DATETIME,
+	FOREIGN KEY (id_proveedor) REFERENCES proveedor(id_proveedor),
+	FOREIGN KEY (id_empl_pedido) REFERENCES empleado(id_empleado)
+);
+
+CREATE TABLE IF NOT EXISTS compra_moto (
+id_compra INT NOT NULL,
+id_moto INT NOT NULL,
+costo_unit FLOAT NOT NULL,
+cantidad INT NOT NULL,
+	PRIMARY KEY (id_compra, id_moto),
+	FOREIGN KEY (id_compra) REFERENCES orden_compra(id_compra),
+	FOREIGN KEY (id_moto) REFERENCES motocicleta(id_moto)
+);
+
+CREATE TABLE IF NOT EXISTS ticket_taller (
+id_ticket INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+patente VARCHAR(8) NOT NULL,
+id_cliente INT NOT NULL,
+id_empleado INT NOT NULL,
+fecha_inicio DATETIME DEFAULT NOW() NOT NULL,
+fecha_fin DATETIME,
+descripcion VARCHAR(300),
+costo_service INT DEFAULT 0 NOT NULL,
+	FOREIGN KEY (patente) REFERENCES moto_cliente(patente),
+	FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+	FOREIGN KEY (id_empleado) REFERENCES empleado(id_empleado)
 );
